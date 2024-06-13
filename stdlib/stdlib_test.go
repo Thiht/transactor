@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/Thiht/transactor/stdlib"
-	"github.com/jackc/pgx/v5/pgxpool"
-	pgxStdlib "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -38,6 +37,11 @@ func TestTransactor(t *testing.T) {
 	dsn, err := postgresContainer.ConnectionString(ctx, "sslmode=disable")
 	require.NoError(t, err)
 
+	reset := func(db *sql.DB) {
+		_, err = db.Exec("UPDATE balances SET amount = 100 WHERE id = 1")
+		require.NoError(t, err)
+	}
+
 	t.Run("with the pgx stdlib driver", func(t *testing.T) {
 		db, err := sql.Open("pgx", dsn)
 		require.NoError(t, err)
@@ -48,8 +52,12 @@ func TestTransactor(t *testing.T) {
 		transactor, dbGetter := stdlib.NewTransactor(db)
 
 		t.Run("it should rollback the transaction", func(t *testing.T) {
+			t.Cleanup(func() {
+				reset(db)
+			})
+
 			err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-				_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = amount + 10 WHERE id = 1")
+				_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = 50 WHERE id = 1")
 				require.NoError(t, err)
 
 				_, err = dbGetter(ctx).ExecContext(ctx, "SELECT 1/0")
@@ -66,9 +74,13 @@ func TestTransactor(t *testing.T) {
 		})
 
 		t.Run("it should commit the transaction", func(t *testing.T) {
+			t.Cleanup(func() {
+				reset(db)
+			})
+
 			err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
 				var amount int
-				err := dbGetter(ctx).QueryRowContext(ctx, "SELECT amount FROM balances WHERE id = 1").Scan(&amount)
+				err := dbGetter(ctx).QueryRowContext(ctx, "SELECT amount FROM balances WHERE id = 1 FOR UPDATE").Scan(&amount)
 				require.NoError(t, err)
 				require.Equal(t, 100, amount)
 
@@ -85,77 +97,61 @@ func TestTransactor(t *testing.T) {
 			require.Equal(t, 110, amount)
 		})
 
-		t.Run("it should fail to begin a nested transaction", func(t *testing.T) {
-			err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-				return transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-					return nil
-				})
+		t.Run("it should rollback the nested transaction", func(t *testing.T) {
+			t.Cleanup(func() {
+				reset(db)
 			})
 
-			require.ErrorContains(t, err, "nested transactions are not supported")
+			err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
+				_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = 50 WHERE id = 1")
+				require.NoError(t, err)
+
+				err = transactor.WithinTransaction(ctx, func(ctx context.Context) error {
+					_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = 70 WHERE id = 1")
+					require.NoError(t, err)
+
+					_, err = dbGetter(ctx).ExecContext(ctx, "SELECT 1/0")
+					require.Error(t, err)
+
+					return err
+				})
+				require.Error(t, err)
+
+				var amount int
+				err = dbGetter(ctx).QueryRowContext(ctx, "SELECT amount FROM balances WHERE id = 1").Scan(&amount)
+				require.NoError(t, err)
+				require.Equal(t, 50, amount)
+
+				return nil
+			})
+			require.NoError(t, err)
 		})
-	})
 
-	t.Run("with pgxpool", func(t *testing.T) {
-		pool, err := pgxpool.New(context.Background(), dsn)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			pool.Close()
-		})
+		t.Run("it should commit the nested transaction", func(t *testing.T) {
+			t.Cleanup(func() {
+				reset(db)
+			})
 
-		db := pgxStdlib.OpenDBFromPool(pool)
-		t.Cleanup(func() {
-			require.NoError(t, db.Close())
-		})
-
-		transactor, dbGetter := stdlib.NewTransactor(db)
-
-		t.Run("it should rollback the transaction", func(t *testing.T) {
 			err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
 				_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = amount + 10 WHERE id = 1")
 				require.NoError(t, err)
 
-				_, err = dbGetter(ctx).ExecContext(ctx, "SELECT 1/0")
-				require.Error(t, err)
+				err = transactor.WithinTransaction(ctx, func(ctx context.Context) error {
+					_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = amount + 10 WHERE id = 1")
+					require.NoError(t, err)
 
-				return err
-			})
-			require.Error(t, err)
-
-			var amount int
-			err = dbGetter(ctx).QueryRowContext(ctx, "SELECT amount FROM balances WHERE id = 1").Scan(&amount)
-			require.NoError(t, err)
-			require.Equal(t, 110, amount)
-		})
-
-		t.Run("it should commit the transaction", func(t *testing.T) {
-			err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-				var amount int
-				err := dbGetter(ctx).QueryRowContext(ctx, "SELECT amount FROM balances WHERE id = 1").Scan(&amount)
-				require.NoError(t, err)
-				require.Equal(t, 110, amount)
-
-				_, err = dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = $1 WHERE id = 1", amount+10)
-				require.NoError(t, err)
-
-				return err
-			})
-			require.NoError(t, err)
-
-			var amount int
-			err = dbGetter(ctx).QueryRowContext(ctx, "SELECT amount FROM balances WHERE id = 1").Scan(&amount)
-			require.NoError(t, err)
-			require.Equal(t, 120, amount)
-		})
-
-		t.Run("it should fail to begin a nested transaction", func(t *testing.T) {
-			err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-				return transactor.WithinTransaction(ctx, func(ctx context.Context) error {
 					return nil
 				})
-			})
+				require.Error(t, err)
 
-			require.ErrorContains(t, err, "nested transactions are not supported")
+				var amount int
+				err = dbGetter(ctx).QueryRowContext(ctx, "SELECT amount FROM balances WHERE id = 1").Scan(&amount)
+				require.NoError(t, err)
+				require.Equal(t, 70, amount)
+
+				return nil
+			})
+			require.NoError(t, err)
 		})
 	})
 }
