@@ -4,4 +4,3 @@ CREATE TABLE balances (
 );
 
 INSERT INTO balances (amount) VALUES (100);
-INSERT INTO balances (amount) VALUES (100);

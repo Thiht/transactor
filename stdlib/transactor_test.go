@@ -3,6 +3,7 @@ package stdlib_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,20 +15,22 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func init() {
-	testcontainers.DefaultLoggingHook = func(logger testcontainers.Logging) testcontainers.ContainerLifecycleHooks {
-		return testcontainers.ContainerLifecycleHooks{}
-	}
-}
-
-func TestTransactor(t *testing.T) {
+func TestIntegrationTransactor(t *testing.T) {
 	t.Parallel()
+
 	ctx := context.Background()
 
+	testcontainers.DefaultLoggingHook = func(_ testcontainers.Logging) testcontainers.ContainerLifecycleHooks {
+		return testcontainers.ContainerLifecycleHooks{}
+	}
 	postgresContainer, err := postgres.RunContainer(ctx,
 		testcontainers.WithImage("postgres:16-alpine"),
 		postgres.WithInitScripts("../testdata/init.sql"),
-		testcontainers.WithWaitStrategy(wait.ForLog("database system is ready to accept connections").WithOccurrence(2).WithStartupTimeout(5*time.Second)),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(5*time.Second),
+		),
 	)
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -38,7 +41,8 @@ func TestTransactor(t *testing.T) {
 	require.NoError(t, err)
 
 	reset := func(db *sql.DB) {
-		_, err = db.Exec("UPDATE balances SET amount = 100 WHERE id = 1")
+		t.Helper()
+		_, err := db.Exec("UPDATE balances SET amount = 100 WHERE id = 1")
 		require.NoError(t, err)
 	}
 
@@ -49,7 +53,7 @@ func TestTransactor(t *testing.T) {
 			require.NoError(t, db.Close())
 		})
 
-		transactor, dbGetter := stdlib.NewTransactor(db)
+		transactor, dbGetter := stdlib.NewTransactor(db, stdlib.NestedTransactionPostgresSavepoints)
 
 		t.Run("it should rollback the transaction", func(t *testing.T) {
 			t.Cleanup(func() {
@@ -60,10 +64,7 @@ func TestTransactor(t *testing.T) {
 				_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = 50 WHERE id = 1")
 				require.NoError(t, err)
 
-				_, err = dbGetter(ctx).ExecContext(ctx, "SELECT 1/0")
-				require.Error(t, err)
-
-				return err
+				return fmt.Errorf("an error occurred")
 			})
 			require.Error(t, err)
 
@@ -97,61 +98,63 @@ func TestTransactor(t *testing.T) {
 			require.Equal(t, 110, amount)
 		})
 
-		t.Run("it should rollback the nested transaction", func(t *testing.T) {
-			t.Cleanup(func() {
-				reset(db)
-			})
+		t.Run("with nested transactions", func(t *testing.T) {
+			t.Run("it should rollback the nested transaction", func(t *testing.T) {
+				t.Cleanup(func() {
+					reset(db)
+				})
 
-			err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-				_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = 50 WHERE id = 1")
-				require.NoError(t, err)
-
-				err = transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-					_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = 70 WHERE id = 1")
+				err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
+					_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = 50 WHERE id = 1")
 					require.NoError(t, err)
 
-					_, err = dbGetter(ctx).ExecContext(ctx, "SELECT 1/0")
+					err = transactor.WithinTransaction(ctx, func(ctx context.Context) error {
+						_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = 70 WHERE id = 1")
+						require.NoError(t, err)
+
+						_, err = dbGetter(ctx).ExecContext(ctx, "SELECT 1/0")
+						require.Error(t, err)
+
+						return err
+					})
 					require.Error(t, err)
 
-					return err
-				})
-				require.Error(t, err)
-
-				var amount int
-				err = dbGetter(ctx).QueryRowContext(ctx, "SELECT amount FROM balances WHERE id = 1").Scan(&amount)
-				require.NoError(t, err)
-				require.Equal(t, 50, amount)
-
-				return nil
-			})
-			require.NoError(t, err)
-		})
-
-		t.Run("it should commit the nested transaction", func(t *testing.T) {
-			t.Cleanup(func() {
-				reset(db)
-			})
-
-			err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-				_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = amount + 10 WHERE id = 1")
-				require.NoError(t, err)
-
-				err = transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-					_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = amount + 10 WHERE id = 1")
+					var amount int
+					err = dbGetter(ctx).QueryRowContext(ctx, "SELECT amount FROM balances WHERE id = 1").Scan(&amount)
 					require.NoError(t, err)
+					require.Equal(t, 50, amount)
 
 					return nil
 				})
-				require.Error(t, err)
-
-				var amount int
-				err = dbGetter(ctx).QueryRowContext(ctx, "SELECT amount FROM balances WHERE id = 1").Scan(&amount)
 				require.NoError(t, err)
-				require.Equal(t, 70, amount)
-
-				return nil
 			})
-			require.NoError(t, err)
+
+			t.Run("it should commit the nested transaction", func(t *testing.T) {
+				t.Cleanup(func() {
+					reset(db)
+				})
+
+				err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
+					_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = amount + 10 WHERE id = 1")
+					require.NoError(t, err)
+
+					err = transactor.WithinTransaction(ctx, func(ctx context.Context) error {
+						_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = amount + 10 WHERE id = 1")
+						require.NoError(t, err)
+
+						return nil
+					})
+					require.NoError(t, err)
+
+					var amount int
+					err = dbGetter(ctx).QueryRowContext(ctx, "SELECT amount FROM balances WHERE id = 1").Scan(&amount)
+					require.NoError(t, err)
+					require.Equal(t, 120, amount)
+
+					return nil
+				})
+				require.NoError(t, err)
+			})
 		})
 	})
 }
