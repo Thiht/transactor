@@ -39,7 +39,9 @@ var (
 
 type (
 	transactorKey struct{}
-	DBGetter      func(context.Context) DB
+	// DBGetter is used to get the current DB handler from the context.
+	// It returns the current transaction if there is one, otherwise it will return the original DB.
+	DBGetter func(context.Context) DB
 )
 
 func txToContext(ctx context.Context, tx sqlDB) context.Context {

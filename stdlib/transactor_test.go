@@ -3,7 +3,7 @@ package stdlib_test
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
 	"testing"
 	"time"
 
@@ -54,7 +54,7 @@ func TestIntegrationTransactor(t *testing.T) {
 			require.NoError(t, db.Close())
 		})
 
-		transactor, dbGetter := stdlib.NewTransactor(db, stdlib.NestedTransactionPostgresSavepoints)
+		transactor, dbGetter := stdlib.NewTransactor(db, stdlib.NestedTransactionsSavepoints)
 
 		t.Run("it should rollback the transaction", func(t *testing.T) {
 			t.Cleanup(func() {
@@ -65,7 +65,7 @@ func TestIntegrationTransactor(t *testing.T) {
 				_, err := dbGetter(ctx).ExecContext(ctx, "UPDATE balances SET amount = 50 WHERE id = 1")
 				require.NoError(t, err)
 
-				return fmt.Errorf("an error occurred")
+				return errors.New("an error occurred")
 			})
 			require.Error(t, err)
 
@@ -172,13 +172,13 @@ func TestTransactor(t *testing.T) {
 			db.Close()
 		})
 
-		transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionPostgresSavepoints)
+		transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsSavepoints)
 
 		mock.ExpectBegin()
 		mock.ExpectRollback()
 
-		err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
-			return fmt.Errorf("an error occurred")
+		err = transactor.WithinTransaction(context.Background(), func(_ context.Context) error {
+			return errors.New("an error occurred")
 		})
 		require.Error(t, err)
 
@@ -194,12 +194,12 @@ func TestTransactor(t *testing.T) {
 			db.Close()
 		})
 
-		transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionPostgresSavepoints)
+		transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsSavepoints)
 
 		mock.ExpectBegin()
 		mock.ExpectCommit()
 
-		err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
+		err = transactor.WithinTransaction(context.Background(), func(_ context.Context) error {
 			return nil
 		})
 		require.NoError(t, err)
@@ -219,7 +219,7 @@ func TestTransactor(t *testing.T) {
 				db.Close()
 			})
 
-			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionPostgresSavepoints)
+			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsSavepoints)
 
 			mock.ExpectBegin()
 			mock.ExpectExec("SAVEPOINT sp_1").WillReturnResult(sqlmock.NewResult(0, 0))
@@ -227,8 +227,8 @@ func TestTransactor(t *testing.T) {
 			mock.ExpectCommit()
 
 			err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
-				err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-					return fmt.Errorf("an error occurred")
+				err := transactor.WithinTransaction(ctx, func(_ context.Context) error {
+					return errors.New("an error occurred")
 				})
 				require.Error(t, err)
 
@@ -248,7 +248,7 @@ func TestTransactor(t *testing.T) {
 				db.Close()
 			})
 
-			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionPostgresSavepoints)
+			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsSavepoints)
 
 			mock.ExpectBegin()
 			mock.ExpectExec("SAVEPOINT sp_1").WillReturnResult(sqlmock.NewResult(0, 0))
@@ -256,7 +256,7 @@ func TestTransactor(t *testing.T) {
 			mock.ExpectCommit()
 
 			err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
-				err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
+				err := transactor.WithinTransaction(ctx, func(_ context.Context) error {
 					return nil
 				})
 				require.NoError(t, err)
@@ -277,7 +277,7 @@ func TestTransactor(t *testing.T) {
 				db.Close()
 			})
 
-			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionPostgresSavepoints)
+			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsSavepoints)
 
 			mock.ExpectBegin()
 			mock.ExpectExec("SAVEPOINT sp_1").WillReturnResult(sqlmock.NewResult(0, 0))
@@ -285,8 +285,8 @@ func TestTransactor(t *testing.T) {
 			mock.ExpectRollback()
 
 			err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
-				err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-					return fmt.Errorf("an error occurred")
+				err := transactor.WithinTransaction(ctx, func(_ context.Context) error {
+					return errors.New("an error occurred")
 				})
 				require.Error(t, err)
 
@@ -306,7 +306,7 @@ func TestTransactor(t *testing.T) {
 				db.Close()
 			})
 
-			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionPostgresSavepoints)
+			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsSavepoints)
 
 			mock.ExpectBegin()
 			mock.ExpectExec("SAVEPOINT sp_1").WillReturnResult(sqlmock.NewResult(0, 0))
@@ -317,12 +317,12 @@ func TestTransactor(t *testing.T) {
 
 			err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
 				err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
-					err := transactor.WithinTransaction(ctx, func(ctx context.Context) error {
+					err := transactor.WithinTransaction(ctx, func(_ context.Context) error {
 						return nil
 					})
 					require.NoError(t, err)
 
-					return fmt.Errorf("an error occurred")
+					return errors.New("an error occurred")
 				})
 				require.Error(t, err)
 

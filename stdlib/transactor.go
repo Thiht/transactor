@@ -8,7 +8,7 @@ import (
 	"github.com/Thiht/transactor"
 )
 
-func NewTransactor(db *sql.DB, nestedTransactionStrategy nestedTransactionStrategy) (transactor.Transactor, DBGetter) {
+func NewTransactor(db *sql.DB, nestedTransactionStrategy nestedTransactionsStrategy) (transactor.Transactor, DBGetter) {
 	sqlDBGetter := func(ctx context.Context) sqlDB {
 		if tx := txFromContext(ctx); tx != nil {
 			return tx
@@ -32,13 +32,13 @@ func NewTransactor(db *sql.DB, nestedTransactionStrategy nestedTransactionStrate
 }
 
 type (
-	sqlDBGetter               func(context.Context) sqlDB
-	nestedTransactionStrategy func(sqlDB, *sql.Tx) (sqlDB, sqlTx)
+	sqlDBGetter                func(context.Context) sqlDB
+	nestedTransactionsStrategy func(sqlDB, *sql.Tx) (sqlDB, sqlTx)
 )
 
 type stdlibTransactor struct {
 	sqlDBGetter
-	nestedTransactionStrategy
+	nestedTransactionsStrategy
 }
 
 func (t *stdlibTransactor) WithinTransaction(ctx context.Context, txFunc func(context.Context) error) error {
@@ -49,7 +49,7 @@ func (t *stdlibTransactor) WithinTransaction(ctx context.Context, txFunc func(co
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	newDB, currentTX := t.nestedTransactionStrategy(currentDB, tx)
+	newDB, currentTX := t.nestedTransactionsStrategy(currentDB, tx)
 	txCtx := txToContext(ctx, newDB)
 
 	if err := txFunc(txCtx); err != nil {

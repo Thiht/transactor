@@ -8,36 +8,32 @@ import (
 	"sync/atomic"
 )
 
-func NestedTransactionPostgresSavepoints(db sqlDB, tx *sql.Tx) (sqlDB, sqlTx) {
-	switch db.(type) {
+// NestedTransactionsSavepoints is a nested transactions implementation using savepoints.
+// It's compatible with PostgreSQL, MySQL, MariaDB, and SQLite.
+func NestedTransactionsSavepoints(db sqlDB, tx *sql.Tx) (sqlDB, sqlTx) {
+	switch typedDB := db.(type) {
 	case *sql.DB:
-		return &nestedTransactionPostgres{Tx: tx}, tx
+		return &nestedTransactionSavepoints{Tx: tx}, tx
 
-	case *nestedTransactionPostgres:
-		nestedTransaction := db.(*nestedTransactionPostgres)
-		nestedTransaction.Tx = tx
-		return nestedTransaction, nestedTransaction
+	case *nestedTransactionSavepoints:
+		typedDB.Tx = tx
+		return typedDB, typedDB
 
 	default:
 		panic("unsupported type")
 	}
 }
 
-type nestedTransactionPostgres struct {
+type nestedTransactionSavepoints struct {
 	*sql.Tx
 	atomic.Int64
 }
 
-var (
-	_ sqlDB = &nestedTransactionPostgres{}
-	_ sqlTx = &nestedTransactionPostgres{}
-)
-
-func (t *nestedTransactionPostgres) Begin() (*sql.Tx, error) {
+func (t *nestedTransactionSavepoints) Begin() (*sql.Tx, error) {
 	return t.BeginTx(context.Background(), nil)
 }
 
-func (t *nestedTransactionPostgres) BeginTx(ctx context.Context, _ *sql.TxOptions) (*sql.Tx, error) {
+func (t *nestedTransactionSavepoints) BeginTx(ctx context.Context, _ *sql.TxOptions) (*sql.Tx, error) {
 	t.Int64.Add(1)
 
 	if _, err := t.ExecContext(ctx, "SAVEPOINT sp_"+strconv.FormatInt(t.Int64.Load(), 10)); err != nil {
@@ -47,7 +43,7 @@ func (t *nestedTransactionPostgres) BeginTx(ctx context.Context, _ *sql.TxOption
 	return t.Tx, nil
 }
 
-func (t *nestedTransactionPostgres) Commit() error {
+func (t *nestedTransactionSavepoints) Commit() error {
 	defer t.Int64.Add(-1)
 
 	if _, err := t.Exec("RELEASE SAVEPOINT sp_" + strconv.FormatInt(t.Int64.Load(), 10)); err != nil {
@@ -57,7 +53,7 @@ func (t *nestedTransactionPostgres) Commit() error {
 	return nil
 }
 
-func (t *nestedTransactionPostgres) Rollback() error {
+func (t *nestedTransactionSavepoints) Rollback() error {
 	defer t.Int64.Add(-1)
 
 	if _, err := t.Exec("ROLLBACK TO SAVEPOINT sp_" + strconv.FormatInt(t.Int64.Load(), 10)); err != nil {
