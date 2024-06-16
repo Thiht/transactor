@@ -34,9 +34,9 @@ func (t *nestedTransactionSavepoints) Begin() (*sql.Tx, error) {
 }
 
 func (t *nestedTransactionSavepoints) BeginTx(ctx context.Context, _ *sql.TxOptions) (*sql.Tx, error) {
-	t.Int64.Add(1)
+	depth := t.Int64.Add(1)
 
-	if _, err := t.ExecContext(ctx, "SAVEPOINT sp_"+strconv.FormatInt(t.Int64.Load(), 10)); err != nil {
+	if _, err := t.ExecContext(ctx, "SAVEPOINT sp_"+strconv.FormatInt(depth, 10)); err != nil {
 		return nil, fmt.Errorf("failed to create savepoint: %w", err)
 	}
 

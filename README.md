@@ -33,6 +33,7 @@ transactor, dbGetter := stdlibTransactor.NewTransactor(
 The currently available strategies for nested transactions are:
 
 - [NestedTransactionsSavepoints](./stdlib/nested_transactions_savepoints.go), an implementation using `SAVEPOINTS` and compatible with [PostgreSQL](https://www.postgresql.org/docs/16/sql-savepoint.html), [MySQL](https://dev.mysql.com/doc/refman/8.0/en/savepoint.html), [MariaDB](https://mariadb.com/kb/en/savepoint/), and [SQLite](https://sqlite.org/lang_savepoint.html),
+- [NestedTransactionsOracle](./stdlib/nested_transactions_oracle.go), an implementation using Oracle `SAVEPOINTS`,
 - [NestedTransactionsNone](./stdlib/nested_transactions_none.go), an implementation that prevents using nested transactions.
 
 ### Use the `dbGetter` in your repositories
