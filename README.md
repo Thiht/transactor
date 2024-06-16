@@ -11,7 +11,7 @@ type Transactor interface {
 }
 ```
 
-`WithinTransaction` starts a new transaction and adds it to the context. Any repository method can then retrieve a transaction from the context or fallback. The transaction is committed if the provided function doesn't return an error. It's rollbacked otherwise.
+`WithinTransaction` starts a new transaction and adds it to the context. Any repository method can then retrieve a transaction from the context or fallback to the initial DB handler. The transaction is committed if the provided function doesn't return an error. It's rollbacked otherwise.
 
 ## Usage
 
