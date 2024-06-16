@@ -25,7 +25,6 @@ type sqlDB interface {
 }
 
 type sqlTx interface {
-	DB
 	Commit() error
 	Rollback() error
 }
