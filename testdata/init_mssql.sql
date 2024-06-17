@@ -1,0 +1,6 @@
+CREATE TABLE balances (
+  id BIGINT PRIMARY KEY IDENTITY,
+  amount BIGINT NOT NULL
+);
+
+INSERT INTO balances (amount) VALUES (100);
