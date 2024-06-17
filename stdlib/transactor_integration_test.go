@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -747,7 +746,7 @@ func TestIntegrationTransactorMSSQL(t *testing.T) {
 	containerPort, err := mssqlContainer.MappedPort(ctx, "1433/tcp")
 	require.NoError(t, err)
 
-	dsn := fmt.Sprintf("sqlserver://sa:Test1234!@localhost:%s", containerPort.Port())
+	dsn := "sqlserver://sa:Test1234!@localhost:" + containerPort.Port()
 
 	initScript, err := os.ReadFile("../testdata/init_mssql.sql")
 	require.NoError(t, err)
