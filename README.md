@@ -1,4 +1,6 @@
-# transactor [![Go Reference](https://pkg.go.dev/badge/github.com/Thiht/transactor.svg)](https://pkg.go.dev/github.com/Thiht/transactor)
+# transactor
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/Thiht/transactor.svg)](https://pkg.go.dev/github.com/Thiht/transactor) [![Main Pipeline](https://github.com/Thiht/transactor/actions/workflows/main.yml/badge.svg)](https://github.com/Thiht/transactor/actions/workflows/main.yml)
 
 The **transactor** pattern is a way to manage transactions seamlessly.
 You can inject your transactor in your services to make transactions completely transparently.
@@ -7,7 +9,7 @@ It relies mostly on the [`Transactor` interface](./transactor.go):
 
 ```go
 type Transactor interface {
-	WithinTransaction(context.Context, func(context.Context) error) error
+  WithinTransaction(context.Context, func(context.Context) error) error
 }
 ```
 
