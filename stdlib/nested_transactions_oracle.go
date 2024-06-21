@@ -28,10 +28,6 @@ type nestedTransactionOracle struct {
 	atomic.Int64
 }
 
-func (t *nestedTransactionOracle) Begin() (*sql.Tx, error) {
-	return t.BeginTx(context.Background(), nil)
-}
-
 func (t *nestedTransactionOracle) BeginTx(ctx context.Context, _ *sql.TxOptions) (*sql.Tx, error) {
 	depth := t.Int64.Add(1)
 

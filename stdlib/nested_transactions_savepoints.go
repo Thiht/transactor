@@ -29,10 +29,6 @@ type nestedTransactionSavepoints struct {
 	atomic.Int64
 }
 
-func (t *nestedTransactionSavepoints) Begin() (*sql.Tx, error) {
-	return t.BeginTx(context.Background(), nil)
-}
-
 func (t *nestedTransactionSavepoints) BeginTx(ctx context.Context, _ *sql.TxOptions) (*sql.Tx, error) {
 	depth := t.Int64.Add(1)
 

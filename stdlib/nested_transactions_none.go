@@ -24,10 +24,6 @@ type nestedTransactionNone struct {
 	*sql.Tx
 }
 
-func (t *nestedTransactionNone) Begin() (*sql.Tx, error) {
-	return t.BeginTx(context.Background(), nil)
-}
-
 func (t *nestedTransactionNone) BeginTx(_ context.Context, _ *sql.TxOptions) (*sql.Tx, error) {
 	return nil, errors.New("nested transactions are not supported")
 }
