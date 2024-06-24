@@ -1,6 +1,6 @@
 # transactor
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/Thiht/transactor.svg)](https://pkg.go.dev/github.com/Thiht/transactor) [![Main Pipeline](https://github.com/Thiht/transactor/actions/workflows/main.yml/badge.svg)](https://github.com/Thiht/transactor/actions/workflows/main.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Thiht/transactor.svg)](https://pkg.go.dev/github.com/Thiht/transactor) [![Main Pipeline](https://github.com/Thiht/transactor/actions/workflows/main.yml/badge.svg)](https://github.com/Thiht/transactor/actions/workflows/main.yml) [![Coverage](https://codecov.io/github/Thiht/transactor/graph/badge.svg?token=NK6KCBMTR6)](https://codecov.io/github/Thiht/transactor)
 
 The **transactor** pattern is a way to manage transactions seamlessly.
 You can inject your transactor in your services to make transactions completely transparently.
