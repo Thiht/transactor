@@ -15,8 +15,11 @@ func NestedTransactionsMSSQL(db sqlDB, tx *sql.Tx) (sqlDB, sqlTx) {
 		return &nestedTransactionMSSQL{Tx: tx}, tx
 
 	case *nestedTransactionMSSQL:
-		typedDB.Tx = tx
-		return typedDB, typedDB
+		nestedTransaction := &nestedTransactionMSSQL{
+			Tx:    tx,
+			depth: typedDB.depth + 1,
+		}
+		return nestedTransaction, nestedTransaction
 
 	default:
 		panic("unsupported type")
@@ -25,13 +28,12 @@ func NestedTransactionsMSSQL(db sqlDB, tx *sql.Tx) (sqlDB, sqlTx) {
 
 type nestedTransactionMSSQL struct {
 	*sql.Tx
-	atomic.Int64
+	depth int64
+	done  atomic.Bool
 }
 
 func (t *nestedTransactionMSSQL) BeginTx(ctx context.Context, _ *sql.TxOptions) (*sql.Tx, error) {
-	depth := t.Int64.Add(1)
-
-	if _, err := t.ExecContext(ctx, "SAVE TRANSACTION sp_"+strconv.FormatInt(depth, 10)); err != nil {
+	if _, err := t.ExecContext(ctx, "SAVE TRANSACTION sp_"+strconv.FormatInt(t.depth+1, 10)); err != nil {
 		return nil, fmt.Errorf("failed to create savepoint: %w", err)
 	}
 
@@ -39,14 +41,19 @@ func (t *nestedTransactionMSSQL) BeginTx(ctx context.Context, _ *sql.TxOptions) 
 }
 
 func (t *nestedTransactionMSSQL) Commit() error {
-	t.Int64.Add(-1)
+	if !t.done.CompareAndSwap(false, true) {
+		return sql.ErrTxDone
+	}
+
 	return nil
 }
 
 func (t *nestedTransactionMSSQL) Rollback() error {
-	defer t.Int64.Add(-1)
+	if !t.done.CompareAndSwap(false, true) {
+		return sql.ErrTxDone
+	}
 
-	if _, err := t.Exec("ROLLBACK TRANSACTION sp_" + strconv.FormatInt(t.Int64.Load(), 10)); err != nil {
+	if _, err := t.Exec("ROLLBACK TRANSACTION sp_" + strconv.FormatInt(t.depth, 10)); err != nil {
 		return fmt.Errorf("failed to rollback to savepoint: %w", err)
 	}
 
