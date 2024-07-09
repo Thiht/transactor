@@ -1,0 +1,3 @@
+ignore:
+  - stdlib/fake_transactor.go
+  - stdlib/nested_transactions_none.go
