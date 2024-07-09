@@ -14,7 +14,7 @@ import (
 func TestTransactor(t *testing.T) {
 	t.Parallel()
 
-	t.Run("it should rollback the transaction", func(t *testing.T) {
+	t.Run("it should rollback the transaction if the callback fails", func(t *testing.T) {
 		t.Parallel()
 
 		db, mock, err := sqlmock.New()
@@ -36,7 +36,7 @@ func TestTransactor(t *testing.T) {
 		require.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("it should commit the transaction", func(t *testing.T) {
+	t.Run("it should commit the transaction if the callback succeeds", func(t *testing.T) {
 		t.Parallel()
 
 		db, mock, err := sqlmock.New()
@@ -71,6 +71,8 @@ func TestTransactor(t *testing.T) {
 
 		mock.ExpectBegin()
 		mock.ExpectCommit().WillReturnError(assert.AnError)
+		// Note: after a failed Commit, Rollback is called but doesn't reach the mock because
+		// the transaction is already marked as done. Rollback returns early with ErrTxDone.
 
 		err = transactor.WithinTransaction(context.Background(), func(_ context.Context) error {
 			return nil

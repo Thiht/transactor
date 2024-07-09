@@ -50,10 +50,12 @@ func (t *stdlibTransactor) WithinTransaction(ctx context.Context, txFunc func(co
 	}
 
 	newDB, currentTX := t.nestedTransactionsStrategy(currentDB, tx)
+	defer func() {
+		_ = currentTX.Rollback() // If rollback fails, there's nothing to do, the transaction will expire by itself
+	}()
 	txCtx := txToContext(ctx, newDB)
 
 	if err := txFunc(txCtx); err != nil {
-		_ = currentTX.Rollback() // If rollback fails, there's nothing to do, the transaction will expire by itself
 		return err
 	}
 
