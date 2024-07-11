@@ -17,6 +17,12 @@ type Transactor interface {
 
 ## Usage
 
+### Installation
+
+```sh
+go get github.com/Thiht/transactor
+```
+
 ### Initialize a `transactor`
 
 This example uses `database/sql` with the [`pgx`](https://github.com/jackc/pgx) driver.
@@ -131,3 +137,15 @@ func (s service) DecreaseBalance(ctx context.Context, account string, amount int
 
 > [!WARNING]
 > Transactions are not thread safe, so make sure not to call code making concurrent database access inside `WithinTransaction`
+
+### Testing
+
+In your tests, you can inject a fake `transactor` and `dbGetter`, using [NewFakeTransactor](./stdlib/fake_transactor.go):
+
+```go
+transactor, dbGetter := stdlibTransactor.NewFakeTransactor(db)
+```
+
+The fake `transactor` will simply execute its callback function, and the `dbGetter` will return the provided `db` handler.
+
+This strategy works because when using this library, you don't have to worry about how transactions are made, just about returning errors appropriately in `WithinTransaction`.

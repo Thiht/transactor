@@ -5,7 +5,7 @@ import (
 	"database/sql"
 )
 
-// DB is the common interface between *sql.DB and *sql.Tx.
+// DB is the common interface between *[sql.DB] and *[sql.Tx].
 type DB interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 	PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
