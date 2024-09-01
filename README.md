@@ -44,6 +44,7 @@ The currently available strategies for nested transactions are:
 - [NestedTransactionsOracle](./stdlib/nested_transactions_oracle.go), an implementation using [Oracle savepoints](https://docs.oracle.com/en/database/oracle/oracle-database/23/sqlrf/SAVEPOINT.html),
 - [NestedTransactionsMSSQL](./stdlib/nested_transactions_mssql.go), an implementation using [Microsoft SQL Server savepoints](https://learn.microsoft.com/en-us/sql/t-sql/language-elements/save-transaction-transact-sql?view=sql-server-ver16),
 - [NestedTransactionsNone](./stdlib/nested_transactions_none.go), an implementation that prevents using nested transactions.
+- [NestedTransactionsFlattened](./stdlib/nested_transactions_flat.go), an implementation which allows to create nested transaction without savepoint, it allows to keep the original transaction in order to simplify the commit system. Must not be used when you want to keep intermediate sql changes.
 
 ### Use the `dbGetter` in your repositories
 

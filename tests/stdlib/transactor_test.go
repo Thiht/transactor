@@ -508,4 +508,117 @@ func TestTransactor(t *testing.T) {
 			require.NoError(t, mock.ExpectationsWereMet())
 		})
 	})
+
+	t.Run("with nested transactions flattened", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("it should rollback the nested transaction in case of error", func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				db.Close()
+			})
+
+			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsFlattened)
+
+			mock.ExpectBegin()
+			mock.ExpectCommit()
+
+			err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
+				err := transactor.WithinTransaction(ctx, func(_ context.Context) error {
+					return errors.New("an error occurred")
+				})
+				require.Error(t, err)
+
+				return nil
+			})
+			require.NoError(t, err)
+
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+
+		t.Run("it should return the original error in case of failure to rollback a nested transaction", func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				db.Close()
+			})
+
+			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsFlattened)
+
+			mock.ExpectBegin()
+			mock.ExpectCommit()
+
+			err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
+				err := transactor.WithinTransaction(ctx, func(_ context.Context) error {
+					return errors.New("an error occurred")
+				})
+				require.Error(t, err)
+				require.ErrorContains(t, err, "an error occurred")
+
+				return nil
+			})
+			require.NoError(t, err)
+
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+
+		t.Run("it should commit the nested transaction", func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				db.Close()
+			})
+
+			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsFlattened)
+
+			mock.ExpectBegin()
+			mock.ExpectCommit()
+
+			err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
+				err := transactor.WithinTransaction(ctx, func(_ context.Context) error {
+					return nil
+				})
+				require.NoError(t, err)
+
+				return nil
+			})
+			require.NoError(t, err)
+
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+
+		t.Run("it should rollback the nested transaction and the parent transaction", func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				db.Close()
+			})
+
+			transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsFlattened)
+
+			mock.ExpectBegin()
+			mock.ExpectRollback()
+
+			err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
+				err := transactor.WithinTransaction(ctx, func(_ context.Context) error {
+					return errors.New("an error occurred")
+				})
+				require.Error(t, err)
+
+				return err
+			})
+			require.Error(t, err)
+
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	})
 }
