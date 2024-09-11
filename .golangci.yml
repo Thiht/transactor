@@ -16,7 +16,7 @@ linters:
     - misspell
 
   disable:
-    - goerr113 # forces to use static errors everywhere
+    - err113 # forces to use static errors everywhere
     - depguard # forces to manually allow each import
     - exhaustruct # forces to initialize all struct fields
     - tparallel # forces to use parallel tests which is not always possible
