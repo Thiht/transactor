@@ -509,3 +509,37 @@ func TestTransactor(t *testing.T) {
 		})
 	})
 }
+
+func TestIsWithinTransaction(t *testing.T) {
+	t.Parallel()
+
+	t.Run("it should return false if the context is not within a transaction", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		assert.False(t, stdlib.IsWithinTransaction(ctx))
+	})
+
+	t.Run("it should return true if the context is within a transaction", func(t *testing.T) {
+		t.Parallel()
+
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			db.Close()
+		})
+
+		transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsNone)
+
+		mock.ExpectBegin()
+		mock.ExpectCommit()
+
+		err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
+			assert.True(t, stdlib.IsWithinTransaction(ctx))
+			return nil
+		})
+		require.NoError(t, err)
+
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+}

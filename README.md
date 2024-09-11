@@ -67,6 +67,20 @@ func (s store) GetBalance(ctx context.Context, account string) (int, error) {
 }
 ```
 
+You can use the `IsWithinTransaction` helper if you need to implement different behaviours depending on whether a transaction is running.
+For example with PostgreSQL, you could add [`FOR UPDATE`](https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE) conditionally:
+
+```go
+func (s store) GetBalance(ctx context.Context, account string) (int, error) {
+  query := `SELECT balance FROM accounts WHERE account = $1`
+  if stdlibTransactor.IsWithinTransaction(ctx) {
+    query += ` FOR UPDATE`
+  }
+
+  // ...
+}
+```
+
 ### Use the `transactor` in your services
 
 ```go

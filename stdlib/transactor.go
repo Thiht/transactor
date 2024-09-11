@@ -65,3 +65,7 @@ func (t *stdlibTransactor) WithinTransaction(ctx context.Context, txFunc func(co
 
 	return nil
 }
+
+func IsWithinTransaction(ctx context.Context) bool {
+	return ctx.Value(transactorKey{}) != nil
+}
