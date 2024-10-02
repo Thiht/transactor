@@ -30,8 +30,8 @@ func TestIntegrationTransactorPostgres(t *testing.T) {
 	testcontainers.DefaultLoggingHook = func(_ testcontainers.Logging) testcontainers.ContainerLifecycleHooks {
 		return testcontainers.ContainerLifecycleHooks{}
 	}
-	postgresContainer, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:16-alpine"),
+	postgresContainer, err := postgres.Run(ctx,
+		"postgres:16-alpine",
 		postgres.WithInitScripts("../testdata/init_postgres.sql"),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
@@ -206,8 +206,8 @@ func TestIntegrationTransactorMySQL(t *testing.T) {
 	testcontainers.DefaultLoggingHook = func(_ testcontainers.Logging) testcontainers.ContainerLifecycleHooks {
 		return testcontainers.ContainerLifecycleHooks{}
 	}
-	mysqlContainer, err := mysql.RunContainer(ctx,
-		testcontainers.WithImage("mysql:8.0"),
+	mysqlContainer, err := mysql.Run(ctx,
+		"mysql:8.0",
 		mysql.WithScripts("../testdata/init_mysql.sql"),
 	)
 	require.NoError(t, err)
