@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Thiht/transactor/stdlib"
+	"github.com/docker/docker/api/types/container"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/microsoft/go-mssqldb"
@@ -541,12 +542,20 @@ func TestIntegrationTransactorOracle(t *testing.T) {
 
 	oracleContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
-			Image:        "gvenzl/oracle-free:23.4-slim-faststart",
+			Image:        "gvenzl/oracle-free:23-slim-faststart",
 			ExposedPorts: []string{"1521/tcp"},
 			Env: map[string]string{
 				"ORACLE_PASSWORD": "test",
 			},
-			WaitingFor: wait.ForLog("DATABASE IS READY TO USE!").WithStartupTimeout(5 * time.Minute),
+			WaitingFor: wait.ForHealthCheck(),
+			ConfigModifier: func(config *container.Config) {
+				config.Healthcheck = &container.HealthConfig{
+					Test:     []string{"CMD", "healthcheck.sh"},
+					Interval: 5 * time.Second,
+					Timeout:  5 * time.Second,
+					Retries:  5,
+				}
+			},
 		},
 		Started: true,
 	})
