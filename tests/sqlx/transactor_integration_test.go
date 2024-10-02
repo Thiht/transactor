@@ -1,17 +1,17 @@
-package stdlib_test
+package sqlx_test
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/Thiht/transactor/stdlib"
+	sqlxTransactor "github.com/Thiht/transactor/sqlx"
 	"github.com/docker/docker/api/types/container"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/microsoft/go-mssqldb"
 	go_ora "github.com/sijms/go-ora/v2"
 	"github.com/stretchr/testify/require"
@@ -47,20 +47,20 @@ func TestIntegrationTransactorPostgres(t *testing.T) {
 	dsn, err := postgresContainer.ConnectionString(ctx, "sslmode=disable")
 	require.NoError(t, err)
 
-	reset := func(db *sql.DB) {
+	reset := func(db *sqlx.DB) {
 		t.Helper()
 		_, err := db.Exec("UPDATE balances SET amount = 100 WHERE id = 1")
 		require.NoError(t, err)
 	}
 
 	t.Run("with the pgx stdlib driver", func(t *testing.T) {
-		db, err := sql.Open("pgx", dsn)
+		db, err := sqlx.Connect("pgx", dsn)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, db.Close())
 		})
 
-		transactor, dbGetter := stdlib.NewTransactor(db, stdlib.NestedTransactionsSavepoints)
+		transactor, dbGetter := sqlxTransactor.NewTransactor(db, sqlxTransactor.NestedTransactionsSavepoints)
 
 		t.Run("it should rollback the transaction", func(t *testing.T) {
 			t.Cleanup(func() {
@@ -218,20 +218,20 @@ func TestIntegrationTransactorMySQL(t *testing.T) {
 	dsn, err := mysqlContainer.ConnectionString(ctx)
 	require.NoError(t, err)
 
-	reset := func(db *sql.DB) {
+	reset := func(db *sqlx.DB) {
 		t.Helper()
 		_, err := db.Exec("UPDATE balances SET amount = 100 WHERE id = 1")
 		require.NoError(t, err)
 	}
 
 	t.Run("with the mysql driver", func(t *testing.T) {
-		db, err := sql.Open("mysql", dsn)
+		db, err := sqlx.Connect("mysql", dsn)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, db.Close())
 		})
 
-		transactor, dbGetter := stdlib.NewTransactor(db, stdlib.NestedTransactionsSavepoints)
+		transactor, dbGetter := sqlxTransactor.NewTransactor(db, sqlxTransactor.NestedTransactionsSavepoints)
 
 		t.Run("it should rollback the transaction", func(t *testing.T) {
 			t.Cleanup(func() {
@@ -377,14 +377,14 @@ func TestIntegrationTransactorSQLite(t *testing.T) {
 	initScript, err := os.ReadFile("../testdata/init_sqlite.sql")
 	require.NoError(t, err)
 
-	reset := func(db *sql.DB) {
+	reset := func(db *sqlx.DB) {
 		t.Helper()
 		_, err := db.Exec("UPDATE balances SET amount = 100 WHERE id = 1")
 		require.NoError(t, err)
 	}
 
 	t.Run("with the sqlite driver", func(t *testing.T) {
-		db, err := sql.Open("sqlite", ":memory:")
+		db, err := sqlx.Connect("sqlite", ":memory:")
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, db.Close())
@@ -393,7 +393,7 @@ func TestIntegrationTransactorSQLite(t *testing.T) {
 		_, err = db.Exec(string(initScript))
 		require.NoError(t, err)
 
-		transactor, dbGetter := stdlib.NewTransactor(db, stdlib.NestedTransactionsSavepoints)
+		transactor, dbGetter := sqlxTransactor.NewTransactor(db, sqlxTransactor.NestedTransactionsSavepoints)
 
 		t.Run("it should rollback the transaction", func(t *testing.T) {
 			t.Cleanup(func() {
@@ -572,14 +572,14 @@ func TestIntegrationTransactorOracle(t *testing.T) {
 	initScript, err := os.ReadFile("../testdata/init_oracle.sql")
 	require.NoError(t, err)
 
-	reset := func(db *sql.DB) {
+	reset := func(db *sqlx.DB) {
 		t.Helper()
 		_, err := db.Exec("UPDATE balances SET amount = 100 WHERE id = 1")
 		require.NoError(t, err)
 	}
 
 	t.Run("with the oracle driver", func(t *testing.T) {
-		db, err := sql.Open("oracle", dsn)
+		db, err := sqlx.Connect("oracle", dsn)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, db.Close())
@@ -588,7 +588,7 @@ func TestIntegrationTransactorOracle(t *testing.T) {
 		_, err = db.Exec(string(initScript))
 		require.NoError(t, err)
 
-		transactor, dbGetter := stdlib.NewTransactor(db, stdlib.NestedTransactionsOracle)
+		transactor, dbGetter := sqlxTransactor.NewTransactor(db, sqlxTransactor.NestedTransactionsOracle)
 
 		t.Run("it should rollback the transaction", func(t *testing.T) {
 			t.Cleanup(func() {
@@ -760,14 +760,14 @@ func TestIntegrationTransactorMSSQL(t *testing.T) {
 	initScript, err := os.ReadFile("../testdata/init_mssql.sql")
 	require.NoError(t, err)
 
-	reset := func(db *sql.DB) {
+	reset := func(db *sqlx.DB) {
 		t.Helper()
 		_, err := db.Exec("UPDATE balances SET amount = 100 WHERE id = 1")
 		require.NoError(t, err)
 	}
 
 	t.Run("with the mssql driver", func(t *testing.T) {
-		db, err := sql.Open("sqlserver", dsn)
+		db, err := sqlx.Connect("sqlserver", dsn)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, db.Close())
@@ -776,7 +776,7 @@ func TestIntegrationTransactorMSSQL(t *testing.T) {
 		_, err = db.Exec(string(initScript))
 		require.NoError(t, err)
 
-		transactor, dbGetter := stdlib.NewTransactor(db, stdlib.NestedTransactionsMSSQL)
+		transactor, dbGetter := sqlxTransactor.NewTransactor(db, sqlxTransactor.NestedTransactionsMSSQL)
 
 		t.Run("it should rollback the transaction", func(t *testing.T) {
 			t.Cleanup(func() {

@@ -1,12 +1,19 @@
 module tests
 
-go 1.22.4
+go 1.23.1
+
+// See https://github.com/microsoft/go-mssqldb/issues/217 , https://github.com/microsoft/mssql-docker/issues/895
+// This temporary workaround is to avoid the error "x509: certificate signed by unknown authority" when connecting to Docker SQL Server DB with Go 1.23.1
+godebug x509negativeserial=1
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Thiht/transactor v1.0.0
+	github.com/Thiht/transactor/sqlx v1.0.0
+	github.com/docker/docker v27.2.1+incompatible
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/jackc/pgx/v5 v5.7.1
+	github.com/jmoiron/sqlx v1.4.0
 	github.com/microsoft/go-mssqldb v1.7.2
 	github.com/sijms/go-ora/v2 v2.8.19
 	github.com/stretchr/testify v1.9.0
@@ -28,7 +35,6 @@ require (
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/docker v27.2.1+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -92,3 +98,5 @@ require (
 )
 
 replace github.com/Thiht/transactor => ..
+
+replace github.com/Thiht/transactor/sqlx => ../sqlx
