@@ -2,6 +2,10 @@ module tests
 
 go 1.23.1
 
+// See https://github.com/microsoft/go-mssqldb/issues/217 , https://github.com/microsoft/mssql-docker/issues/895
+// This temporary workaround is to avoid the error "x509: certificate signed by unknown authority" when connecting to Docker SQL Server DB with Go 1.23.1
+godebug x509negativeserial=1
+
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Thiht/transactor v1.0.0
