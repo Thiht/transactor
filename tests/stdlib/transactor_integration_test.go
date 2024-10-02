@@ -729,6 +729,8 @@ func TestIntegrationTransactorOracle(t *testing.T) {
 func TestIntegrationTransactorMSSQL(t *testing.T) {
 	t.Parallel()
 
+	t.Skip("Waiting for this issue to be fixed: https://github.com/microsoft/mssql-docker/issues/895")
+
 	ctx := context.Background()
 
 	testcontainers.DefaultLoggingHook = func(_ testcontainers.Logging) testcontainers.ContainerLifecycleHooks {
