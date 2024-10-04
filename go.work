@@ -2,6 +2,7 @@ go 1.23.1
 
 use (
 	.
+	./pgx
 	./sqlx
 	./tests
 )
