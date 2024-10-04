@@ -1,3 +1,9 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 80%
+
 ignore:
   - pgx/fake_transactor.go
   - sqlx/fake_transactor.go
