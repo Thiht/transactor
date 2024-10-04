@@ -7,7 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func NewTransactor(db *sqlx.DB, nestedTransactionStrategy nestedTransactionsStrategy) (*sqlxTransactor, DBGetter) { //nolint:revive // *sqlxTransactor implements Transactor, so it's ok to return a private struct.
+func NewTransactor(db *sqlx.DB, nestedTransactionStrategy nestedTransactionsStrategy) (*Transactor, DBGetter) {
 	sqlDBGetter := func(ctx context.Context) sqlxDB {
 		if tx := txFromContext(ctx); tx != nil {
 			return tx
@@ -24,7 +24,7 @@ func NewTransactor(db *sqlx.DB, nestedTransactionStrategy nestedTransactionsStra
 		return db
 	}
 
-	return &sqlxTransactor{
+	return &Transactor{
 		sqlDBGetter,
 		nestedTransactionStrategy,
 	}, dbGetter
@@ -35,12 +35,12 @@ type (
 	nestedTransactionsStrategy func(sqlxDB, *sqlx.Tx) (sqlxDB, sqlxTx)
 )
 
-type sqlxTransactor struct {
+type Transactor struct {
 	sqlxDBGetter
 	nestedTransactionsStrategy
 }
 
-func (t *sqlxTransactor) WithinTransaction(ctx context.Context, txFunc func(context.Context) error) error {
+func (t *Transactor) WithinTransaction(ctx context.Context, txFunc func(context.Context) error) error {
 	currentDB := t.sqlxDBGetter(ctx)
 
 	tx, err := currentDB.BeginTxx(ctx, nil)

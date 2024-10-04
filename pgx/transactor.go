@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewTransactor(db *pgx.Conn) (*pgxTransactor, DBGetter) { //nolint:revive // *pgxTransactor implements Transactor, so it's ok to return a private struct.
+func NewTransactor(db *pgx.Conn) (*Transactor, DBGetter) {
 	pgxTxGetter := func(ctx context.Context) pgxDB {
 		if tx := txFromContext(ctx); tx != nil {
 			return tx
@@ -25,12 +25,12 @@ func NewTransactor(db *pgx.Conn) (*pgxTransactor, DBGetter) { //nolint:revive //
 		return db
 	}
 
-	return &pgxTransactor{
+	return &Transactor{
 		pgxTxGetter,
 	}, dbGetter
 }
 
-func NewTransactorFromPool(pool *pgxpool.Pool) (*pgxTransactor, DBGetter) { //nolint:revive // *pgxTransactor implements Transactor, so it's ok to return a private struct.
+func NewTransactorFromPool(pool *pgxpool.Pool) (*Transactor, DBGetter) {
 	pgxTxGetter := func(ctx context.Context) pgxDB {
 		if tx := txFromContext(ctx); tx != nil {
 			return tx
@@ -47,7 +47,7 @@ func NewTransactorFromPool(pool *pgxpool.Pool) (*pgxTransactor, DBGetter) { //no
 		return pool
 	}
 
-	return &pgxTransactor{
+	return &Transactor{
 		pgxTxGetter,
 	}, dbGetter
 }
@@ -56,11 +56,11 @@ type (
 	pgxTxGetter func(context.Context) pgxDB
 )
 
-type pgxTransactor struct {
+type Transactor struct {
 	pgxTxGetter
 }
 
-func (t *pgxTransactor) WithinTransaction(ctx context.Context, txFunc func(context.Context) error) error {
+func (t *Transactor) WithinTransaction(ctx context.Context, txFunc func(context.Context) error) error {
 	db := t.pgxTxGetter(ctx)
 
 	tx, err := db.Begin(ctx)
