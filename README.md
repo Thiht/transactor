@@ -23,9 +23,17 @@ type Transactor interface {
 go get github.com/Thiht/transactor
 ```
 
+The `database/sql` default implementation (`stdlib`) is included in the `github.com/Thiht/transactor` package.
+Additional implementations are available in separate modules:
+
+- the [`pgx`](https://github.com/jackc/pgx) implementation is available in `github.com/Thiht/transactor/pgx`,
+- the [`sqlx`](https://github.com/jmoiron/sqlx) implementation is available in `github.com/Thiht/transactor/sqlx`.
+
+The following examples use the `stdlib` implementation, but the code isn't too different with the other implementations.
+
 ### Initialize a `transactor`
 
-This example uses `database/sql` with the [`pgx`](https://github.com/jackc/pgx) driver.
+This example uses `database/sql` with the [`pgx`](https://github.com/jackc/pgx) driver, but any `database/sql` driver can be used.
 
 ```go
 import stdlibTransactor "github.com/Thiht/transactor/stdlib"
@@ -38,7 +46,7 @@ transactor, dbGetter := stdlibTransactor.NewTransactor(
 )
 ```
 
-The currently available strategies for nested transactions are:
+The currently available strategies for nested transactions with the `stdlib` implementation are:
 
 - [NestedTransactionsSavepoints](./stdlib/nested_transactions_savepoints.go), an implementation using `SAVEPOINTS` and compatible with [PostgreSQL](https://www.postgresql.org/docs/16/sql-savepoint.html), [MySQL](https://dev.mysql.com/doc/refman/8.0/en/savepoint.html), [MariaDB](https://mariadb.com/kb/en/savepoint/), and [SQLite](https://sqlite.org/lang_savepoint.html),
 - [NestedTransactionsOracle](./stdlib/nested_transactions_oracle.go), an implementation using [Oracle savepoints](https://docs.oracle.com/en/database/oracle/oracle-database/23/sqlrf/SAVEPOINT.html),
