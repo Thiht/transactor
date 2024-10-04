@@ -1,4 +1,5 @@
 ignore:
+  - pgx/fake_transactor.go
   - sqlx/fake_transactor.go
   - sqlx/nested_transactions_none.go
   - stdlib/fake_transactor.go
