@@ -9,6 +9,8 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: "0 8 * * MON" # Run every Monday at 08:00
   workflow_dispatch: # Allow manual trigger
 
 env:
