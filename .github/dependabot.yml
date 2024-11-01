@@ -6,7 +6,11 @@ updates:
       interval: weekly
 
   - package-ecosystem: gomod
-    directory: /
+    directories:
+      - /
+      - /pgx
+      - /sqlx
+      - /tests
     schedule:
       interval: weekly
     allow:
