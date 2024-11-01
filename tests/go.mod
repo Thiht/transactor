@@ -11,7 +11,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/microsoft/go-mssqldb v1.7.2
-	github.com/sijms/go-ora/v2 v2.8.21
+	github.com/sijms/go-ora/v2 v2.8.22
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.33.0
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.33.0
