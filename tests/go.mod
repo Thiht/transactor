@@ -7,8 +7,8 @@ require (
 	github.com/Thiht/transactor v1.0.0
 	github.com/Thiht/transactor/pgx v0.0.0-20241004220644-f38c2ff062e8
 	github.com/Thiht/transactor/sqlx v1.0.0
-	github.com/go-sql-driver/mysql v1.9.0
-	github.com/jackc/pgx/v5 v5.7.2
+	github.com/go-sql-driver/mysql v1.9.1
+	github.com/jackc/pgx/v5 v5.7.3
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/microsoft/go-mssqldb v1.8.0
 	github.com/sijms/go-ora/v2 v2.8.24
@@ -16,7 +16,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.35.0
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.35.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.35.0
-	modernc.org/sqlite v1.36.0
+	modernc.org/sqlite v1.36.1
 )
 
 require (
@@ -31,7 +31,7 @@ require (
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/docker v28.0.1+incompatible // indirect
+	github.com/docker/docker v28.0.2+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -85,7 +85,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.61.13 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.8.2 // indirect
+	modernc.org/memory v1.9.1 // indirect
 )
 
 replace github.com/Thiht/transactor => ..
