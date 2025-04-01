@@ -1,6 +1,7 @@
 module github.com/Thiht/transactor/pgx
 
 go 1.23.1
+
 toolchain go1.24.1
 
 require github.com/jackc/pgx/v5 v5.7.4
