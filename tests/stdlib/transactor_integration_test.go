@@ -1,4 +1,3 @@
-//go:debug x509negativeserial=1
 package stdlib_test
 
 import (
