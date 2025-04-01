@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/log"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -20,7 +21,7 @@ func TestIntegrationTransactorPostgres(t *testing.T) {
 
 	ctx := context.Background()
 
-	testcontainers.DefaultLoggingHook = func(_ testcontainers.Logging) testcontainers.ContainerLifecycleHooks {
+	testcontainers.DefaultLoggingHook = func(log.Logger) testcontainers.ContainerLifecycleHooks {
 		return testcontainers.ContainerLifecycleHooks{}
 	}
 	postgresContainer, err := postgres.Run(ctx,

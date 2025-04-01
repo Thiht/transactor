@@ -1,4 +1,3 @@
-//go:debug x509negativeserial=1
 package stdlib_test
 
 import (
@@ -16,6 +15,7 @@ import (
 	go_ora "github.com/sijms/go-ora/v2"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/log"
 	"github.com/testcontainers/testcontainers-go/modules/mysql"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -27,7 +27,7 @@ func TestIntegrationTransactorPostgres(t *testing.T) {
 
 	ctx := context.Background()
 
-	testcontainers.DefaultLoggingHook = func(_ testcontainers.Logging) testcontainers.ContainerLifecycleHooks {
+	testcontainers.DefaultLoggingHook = func(log.Logger) testcontainers.ContainerLifecycleHooks {
 		return testcontainers.ContainerLifecycleHooks{}
 	}
 	postgresContainer, err := postgres.Run(ctx,
@@ -203,7 +203,7 @@ func TestIntegrationTransactorMySQL(t *testing.T) {
 
 	ctx := context.Background()
 
-	testcontainers.DefaultLoggingHook = func(_ testcontainers.Logging) testcontainers.ContainerLifecycleHooks {
+	testcontainers.DefaultLoggingHook = func(log.Logger) testcontainers.ContainerLifecycleHooks {
 		return testcontainers.ContainerLifecycleHooks{}
 	}
 	mysqlContainer, err := mysql.Run(ctx,
@@ -536,7 +536,7 @@ func TestIntegrationTransactorOracle(t *testing.T) {
 
 	ctx := context.Background()
 
-	testcontainers.DefaultLoggingHook = func(_ testcontainers.Logging) testcontainers.ContainerLifecycleHooks {
+	testcontainers.DefaultLoggingHook = func(log.Logger) testcontainers.ContainerLifecycleHooks {
 		return testcontainers.ContainerLifecycleHooks{}
 	}
 
@@ -723,7 +723,7 @@ func TestIntegrationTransactorMSSQL(t *testing.T) {
 
 	ctx := context.Background()
 
-	testcontainers.DefaultLoggingHook = func(_ testcontainers.Logging) testcontainers.ContainerLifecycleHooks {
+	testcontainers.DefaultLoggingHook = func(log.Logger) testcontainers.ContainerLifecycleHooks {
 		return testcontainers.ContainerLifecycleHooks{}
 	}
 
