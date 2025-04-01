@@ -1,35 +1,45 @@
+version: "2"
 linters:
-  presets:
-    - bugs
-    - comment
-    - error
-    - format
-    - import
-    - metalinter
-    - module
-    - performance
-    - sql
-    - test
-    - unused
-
   enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - contextcheck
+    - copyloopvar
+    - dupword
+    - errname
+    - errorlint
+    - fatcontext
+    - forcetypeassert
+    - gochecknoglobals
+    - gochecknoinits
+    - gocritic
+    - gosec
+    - makezero
     - misspell
-
-  disable:
-    - err113 # forces to use static errors everywhere
-    - depguard # forces to manually allow each import
-    - exhaustruct # forces to initialize all struct fields
-    - tparallel # forces to use parallel tests which is not always possible
-
-issues:
-  exclude-rules:
-    - path: (.+)_test.go
-      linters:
-        - wrapcheck
-
-linters-settings:
-  paralleltest:
-    ignore-missing-subtests: true
-
-run:
-  timeout: 1m
+    - paralleltest
+    - prealloc
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - unparam
+    - wrapcheck
+  settings:
+    paralleltest:
+      ignore-missing-subtests: true
+  exclusions:
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - wrapcheck
+        path: (.+)_test.go
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
