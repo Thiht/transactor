@@ -10,7 +10,7 @@ require (
 	github.com/Thiht/transactor/pgx v0.0.0-20241004220644-f38c2ff062e8
 	github.com/Thiht/transactor/sqlx v1.0.0
 	github.com/go-sql-driver/mysql v1.9.2
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/microsoft/go-mssqldb v1.8.1
 	github.com/sijms/go-ora/v2 v2.8.24
@@ -86,9 +86,9 @@ require (
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/libc v1.65.6 // indirect
+	modernc.org/libc v1.65.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.10.0 // indirect
+	modernc.org/memory v1.11.0 // indirect
 )
 
 replace github.com/Thiht/transactor => ..
