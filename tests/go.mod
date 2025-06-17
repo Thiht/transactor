@@ -6,9 +6,9 @@ toolchain go1.24.1
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/Thiht/transactor v1.0.0
-	github.com/Thiht/transactor/pgx v0.0.0-20241004220644-f38c2ff062e8
-	github.com/Thiht/transactor/sqlx v1.0.0
+	github.com/Thiht/transactor v0.0.0
+	github.com/Thiht/transactor/pgx v0.0.0
+	github.com/Thiht/transactor/sqlx v0.0.0
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jmoiron/sqlx v1.4.0
@@ -94,5 +94,7 @@ require (
 )
 
 replace github.com/Thiht/transactor => ..
+
+replace github.com/Thiht/transactor/pgx => ../pgx
 
 replace github.com/Thiht/transactor/sqlx => ../sqlx

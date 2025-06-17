@@ -25,7 +25,7 @@ func TestIntegrationTransactorPostgres(t *testing.T) {
 		return testcontainers.ContainerLifecycleHooks{}
 	}
 	postgresContainer, err := postgres.Run(ctx,
-		"postgres:16-alpine",
+		"postgres:17-alpine",
 		postgres.WithInitScripts("../testdata/init_postgres.sql"),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
