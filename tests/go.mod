@@ -14,7 +14,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/microsoft/go-mssqldb v1.9.2
 	github.com/sijms/go-ora/v2 v2.9.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	github.com/testcontainers/testcontainers-go v0.38.0
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.38.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.38.0
