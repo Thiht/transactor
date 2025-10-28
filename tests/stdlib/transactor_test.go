@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/Thiht/transactor"
 	"github.com/Thiht/transactor/stdlib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,6 +14,11 @@ import (
 
 func TestTransactor(t *testing.T) {
 	t.Parallel()
+
+	t.Run("it should implement the Transactor interface", func(t *testing.T) {
+		t.Parallel()
+		assert.Implements(t, (*transactor.Transactor)(nil), &stdlib.Transactor{})
+	})
 
 	t.Run("it should rollback the transaction if the callback fails", func(t *testing.T) {
 		t.Parallel()
@@ -510,13 +516,22 @@ func TestTransactor(t *testing.T) {
 	})
 }
 
-func TestIsWithinTransaction(t *testing.T) {
+func TestTransactor_IsWithinTransaction(t *testing.T) {
 	t.Parallel()
 
 	t.Run("it should return false if the context is not within a transaction", func(t *testing.T) {
 		t.Parallel()
 
+		db, _, err := sqlmock.New()
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			db.Close()
+		})
+
+		transactor, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsNone)
+
 		ctx := context.Background()
+		assert.False(t, transactor.IsWithinTransaction(ctx))
 		assert.False(t, stdlib.IsWithinTransaction(ctx))
 	})
 
@@ -535,6 +550,33 @@ func TestIsWithinTransaction(t *testing.T) {
 		mock.ExpectCommit()
 
 		err = transactor.WithinTransaction(context.Background(), func(ctx context.Context) error {
+			assert.True(t, transactor.IsWithinTransaction(ctx))
+			assert.True(t, stdlib.IsWithinTransaction(ctx))
+			return nil
+		})
+		require.NoError(t, err)
+
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("it should return false if the context is within another transactor transaction", func(t *testing.T) {
+		t.Parallel()
+
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			db.Close()
+		})
+
+		transactorA, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsNone)
+		transactorB, _ := stdlib.NewTransactor(db, stdlib.NestedTransactionsNone)
+
+		mock.ExpectBegin()
+		mock.ExpectCommit()
+
+		err = transactorA.WithinTransaction(context.Background(), func(ctx context.Context) error {
+			assert.True(t, transactorA.IsWithinTransaction(ctx))
+			assert.False(t, transactorB.IsWithinTransaction(ctx))
 			assert.True(t, stdlib.IsWithinTransaction(ctx))
 			return nil
 		})
