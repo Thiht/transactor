@@ -36,18 +36,20 @@ var (
 )
 
 type (
-	transactorKey struct{}
+	transactorKey struct{ _ *struct{} }
+	// Deprecated: transactorMarker is used in addition to transactorKey to keep the legacy IsWithinTransaction function.
+	transactorMarker struct{}
 	// DBGetter is used to get the current DB handler from the context.
 	// It returns the current transaction if there is one, otherwise it will return the original DB.
 	DBGetter func(context.Context) DB
 )
 
-func txToContext(ctx context.Context, tx sqlDB) context.Context {
-	return context.WithValue(ctx, transactorKey{}, tx)
+func txToContext(ctx context.Context, key *transactorKey, tx sqlDB) context.Context {
+	return context.WithValue(context.WithValue(ctx, key, tx), transactorMarker{}, struct{}{})
 }
 
-func txFromContext(ctx context.Context) sqlDB {
-	if tx, ok := ctx.Value(transactorKey{}).(sqlDB); ok {
+func txFromContext(ctx context.Context, key *transactorKey) sqlDB {
+	if tx, ok := ctx.Value(key).(sqlDB); ok {
 		return tx
 	}
 
