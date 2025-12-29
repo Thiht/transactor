@@ -8,7 +8,7 @@ require (
 	github.com/Thiht/transactor/pgx v0.0.0
 	github.com/Thiht/transactor/sqlx v0.0.0
 	github.com/go-sql-driver/mysql v1.9.3
-	github.com/jackc/pgx/v5 v5.7.6
+	github.com/jackc/pgx/v5 v5.8.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/microsoft/go-mssqldb v1.9.5
 	github.com/sijms/go-ora/v2 v2.9.0
@@ -16,7 +16,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.40.0
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.40.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.40.0
-	modernc.org/sqlite v1.41.0
+	modernc.org/sqlite v1.42.2
 )
 
 require (
@@ -86,7 +86,7 @@ require (
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/libc v1.67.1 // indirect
+	modernc.org/libc v1.67.2 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
