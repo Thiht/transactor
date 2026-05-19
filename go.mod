@@ -1,3 +1,3 @@
 module github.com/Thiht/transactor
 
-go 1.22
+go 1.25.7
