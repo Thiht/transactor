@@ -559,7 +559,7 @@ func TestIntegrationTransactorOracle(t *testing.T) {
 	containerPort, err := oracleContainer.MappedPort(ctx, "1521/tcp")
 	require.NoError(t, err)
 
-	dsn := go_ora.BuildUrl("localhost", containerPort.Int(), "freepdb1", "system", "test", nil)
+	dsn := go_ora.BuildUrl("localhost", int(containerPort.Num()), "freepdb1", "system", "test", nil)
 
 	initScript, err := os.ReadFile("../testdata/init_oracle.sql")
 	require.NoError(t, err)
