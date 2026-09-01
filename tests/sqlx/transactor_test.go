@@ -61,6 +61,35 @@ func TestTransactor(t *testing.T) {
 		require.NoError(t, mock.ExpectationsWereMet())
 	})
 
+	t.Run("it should store a valid transaction wrapper in the context", func(t *testing.T) {
+		t.Parallel()
+
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = db.Close()
+		})
+		sqlxDB := sqlx.NewDb(db, "postgres")
+
+		transactor, dbGetter := sqlxTransactor.NewTransactor(sqlxDB, sqlxTransactor.NestedTransactionsNone)
+		mock.ExpectBegin()
+		mock.ExpectQuery("SELECT 1").WithArgs(nil).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(true))
+		mock.ExpectCommit()
+		ctx := context.Background()
+		err = transactor.WithinTransaction(ctx, func(txCtx context.Context) error {
+			var result bool
+			// we only know the transaction wrapper is valid if we can use it to perform a query
+			db := dbGetter(txCtx)
+			err := db.QueryRowxContext(txCtx, "SELECT 1", nil).Scan(&result)
+			require.NoError(t, err)
+			require.True(t, result)
+			return nil
+		})
+		require.NoError(t, err)
+
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
 	t.Run("it should return an error if the commit fails", func(t *testing.T) {
 		t.Parallel()
 

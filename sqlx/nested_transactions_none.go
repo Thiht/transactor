@@ -12,7 +12,10 @@ import (
 func NestedTransactionsNone(db sqlxDB, tx *sqlx.Tx) (sqlxDB, sqlxTx) {
 	switch typedDB := db.(type) {
 	case *sqlx.DB:
-		return &nestedTransactionNone{}, tx
+		// wrap the current transaction so callers get a DB-like object that
+		// forwards methods to the active *sqlx.Tx, but rejects BeginTxx/Commit/Rollback
+		// for nested transaction operations.
+		return &nestedTransactionNone{Tx: tx}, tx
 
 	case *nestedTransactionNone:
 		return typedDB, typedDB
