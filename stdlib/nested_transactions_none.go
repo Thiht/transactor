@@ -10,7 +10,7 @@ import (
 func NestedTransactionsNone(db sqlDB, tx *sql.Tx) (sqlDB, sqlTx) {
 	switch typedDB := db.(type) {
 	case *sql.DB:
-		return &nestedTransactionNone{tx}, tx
+		return &nestedTransactionNone{Tx: tx}, tx
 
 	case *nestedTransactionNone:
 		return typedDB, typedDB

@@ -58,23 +58,23 @@ func TestTransactor(t *testing.T) {
 		require.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("it should store a valid transaction wrapper in the context", func(t *testing.T) {
+	t.Run("it should query using the DB getter within the transaction", func(t *testing.T) {
 		t.Parallel()
 
 		db, mock, err := sqlmock.New()
 		require.NoError(t, err)
 		t.Cleanup(func() {
-			_ = db.Close()
+			db.Close()
 		})
 
 		transactor, dbGetter := stdlib.NewTransactor(db, stdlib.NestedTransactionsNone)
+
 		mock.ExpectBegin()
 		mock.ExpectQuery("SELECT 1").WithArgs(nil).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(true))
 		mock.ExpectCommit()
-		ctx := context.Background()
-		err = transactor.WithinTransaction(ctx, func(txCtx context.Context) error {
+
+		err = transactor.WithinTransaction(context.Background(), func(txCtx context.Context) error {
 			var result bool
-			// we only know the transaction wrapper is valid if we can use it to perform a query
 			db := dbGetter(txCtx)
 			err := db.QueryRowContext(txCtx, "SELECT 1", nil).Scan(&result)
 			require.NoError(t, err)
