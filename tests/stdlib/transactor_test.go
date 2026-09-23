@@ -58,6 +58,34 @@ func TestTransactor(t *testing.T) {
 		require.NoError(t, mock.ExpectationsWereMet())
 	})
 
+	t.Run("it should query using the DB getter within the transaction", func(t *testing.T) {
+		t.Parallel()
+
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			db.Close()
+		})
+
+		transactor, dbGetter := stdlib.NewTransactor(db, stdlib.NestedTransactionsNone)
+
+		mock.ExpectBegin()
+		mock.ExpectQuery("SELECT 1").WithArgs(nil).WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(true))
+		mock.ExpectCommit()
+
+		err = transactor.WithinTransaction(context.Background(), func(txCtx context.Context) error {
+			var result bool
+			db := dbGetter(txCtx)
+			err := db.QueryRowContext(txCtx, "SELECT 1", nil).Scan(&result)
+			require.NoError(t, err)
+			require.True(t, result)
+			return nil
+		})
+		require.NoError(t, err)
+
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
+
 	t.Run("it should return an error if the commit fails", func(t *testing.T) {
 		t.Parallel()
 
