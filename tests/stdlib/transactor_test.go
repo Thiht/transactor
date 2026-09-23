@@ -18,6 +18,13 @@ func TestTransactor(t *testing.T) {
 	t.Run("it should implement the Transactor interface", func(t *testing.T) {
 		t.Parallel()
 		assert.Implements(t, (*transactor.Transactor)(nil), &stdlib.Transactor{})
+		assert.Implements(t, (*transactor.Transactor)(nil), stdlib.FakeTransactor{})
+	})
+
+	t.Run("the fake transactor should not be within a transaction", func(t *testing.T) {
+		t.Parallel()
+
+		assert.False(t, stdlib.FakeTransactor{}.IsWithinTransaction(context.Background()))
 	})
 
 	t.Run("it should rollback the transaction if the callback fails", func(t *testing.T) {

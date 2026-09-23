@@ -9,6 +9,6 @@ type Transactor interface {
 	WithinTransaction(context.Context, func(context.Context) error) error
 
 	// IsWithinTransaction returns true if the context is within a transaction.
-	// Each transactor instance use a unique context key, so this method must be used with the correct transactor instance.
+	// Each transactor instance uses a unique context key, so this method must be called on the transactor instance that created the transaction.
 	IsWithinTransaction(context.Context) bool
 }
