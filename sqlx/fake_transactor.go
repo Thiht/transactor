@@ -21,3 +21,7 @@ type FakeTransactor struct{}
 func (FakeTransactor) WithinTransaction(ctx context.Context, txFunc func(context.Context) error) error {
 	return txFunc(ctx)
 }
+
+func (FakeTransactor) IsWithinTransaction(context.Context) bool {
+	return false
+}

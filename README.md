@@ -10,6 +10,7 @@ It relies mostly on the [`Transactor` interface](./transactor.go):
 ```go
 type Transactor interface {
   WithinTransaction(context.Context, func(context.Context) error) error
+  IsWithinTransaction(context.Context) bool
 }
 ```
 
@@ -61,6 +62,7 @@ Instead of injecting the `*sql.DB` handler directly to your repositories, you no
 type store struct {
 -  db *sql.DB
 +  dbGetter stdlibTransactor.DBGetter
++  transactor transactor.Transactor
 }
 
 func (s store) GetBalance(ctx context.Context, account string) (int, error) {
@@ -75,19 +77,24 @@ func (s store) GetBalance(ctx context.Context, account string) (int, error) {
 }
 ```
 
-You can use the `IsWithinTransaction` helper if you need to implement different behaviours depending on whether a transaction is running.
+You can use `IsWithinTransaction` if you need to implement different behaviours depending on whether a transaction is running.
 For example with PostgreSQL, you could add [`FOR UPDATE`](https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE) conditionally:
 
 ```go
 func (s store) GetBalance(ctx context.Context, account string) (int, error) {
   query := `SELECT balance FROM accounts WHERE account = $1`
-  if stdlibTransactor.IsWithinTransaction(ctx) {
+  if s.transactor.IsWithinTransaction(ctx) {
     query += ` FOR UPDATE`
   }
 
   // ...
 }
 ```
+
+`IsWithinTransaction` is available on each transactor instance (and on the `Transactor` interface). It returns `true` only for transactions started by that specific instance, which makes it safe to use when multiple transactor instances are involved (e.g. several databases).
+
+> [!WARNING]
+> The package-level `IsWithinTransaction` helper is deprecated: it cannot distinguish between multiple transactor instances and may return incorrect results.
 
 ### Use the `transactor` in your services
 
