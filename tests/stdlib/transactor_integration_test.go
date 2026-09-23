@@ -735,7 +735,10 @@ func TestIntegrationTransactorMSSQL(t *testing.T) {
 				"ACCEPT_EULA":       "Y",
 				"MSSQL_SA_PASSWORD": "Test1234!",
 			},
-			WaitingFor: wait.ForLog("Service Broker manager has started").WithStartupTimeout(5 * time.Minute),
+			WaitingFor: wait.ForAll(
+				wait.ForListeningPort("1433/tcp"),
+				wait.ForLog("Recovery is complete."),
+			).WithStartupTimeout(5 * time.Minute),
 		},
 		Started: true,
 	})
