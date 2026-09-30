@@ -27,6 +27,11 @@ linters:
   settings:
     paralleltest:
       ignore-missing-subtests: true
+    revive:
+      enable-default-rules: true
+      rules:
+        - name: unexported-return
+          disabled: true
   exclusions:
     presets:
       - comments
